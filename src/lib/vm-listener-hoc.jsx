@@ -22,12 +22,13 @@ const vmListenerHOC = function(WrappedComponent) {
         constructor(props) {
             super(props);
             bindAll(this, ["handleKeyDown", "handleKeyUp"]);
-            let eventoWrapper = (nomeDoEvento)=>{
-              let funcao = () => {
+            let eventoWrapper = (nomeDoEvento, func)=>{
+              let novaFuncao = () => {
+                func.apply(this.props.vm,arguments);
                 console.log("Chama elimu analizer pro evento ",nomeDoEvento);
-                ElimuAnalyzer.enviarDadosAluno(nomeDoEvento,this.props.vm)
+                ElimuAnalyzer.enviarDadosAluno(nomeDoEvento,this.props.vm);
               }
-              return [nomeDoEvento, funcao];
+              return [nomeDoEvento, novaFuncao];
             }
             // We have to start listening to the vm here rather than in
             // componentDidMount because the HOC mounts the wrapped component,
@@ -37,8 +38,7 @@ const vmListenerHOC = function(WrappedComponent) {
             // we need to start listening before mounting the wrapped component.
             this.props.vm.on("targetsUpdate", this.props.onTargetsUpdate);
             this.props.vm.on("MONITORS_UPDATE", this.props.onMonitorsUpdate);
-            this.props.vm.on("BLOCK_DRAG_UPDATE", this.props.onBlockDragUpdate);
-            this.props.vm.on(...eventoWrapper("BLOCK_DRAG_UPDATE"));
+            this.props.vm.on(...eventoWrapper("BLOCK_DRAG_UPDATE", this.props.onBlockDragUpdate));
             
             this.props.vm.on("TURBO_MODE_ON", this.props.onTurboModeOn);
             this.props.vm.on("TURBO_MODE_OFF", this.props.onTurboModeOff);
