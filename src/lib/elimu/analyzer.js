@@ -31,9 +31,9 @@ let finger = new Fingerprint2({ excludeUserAgent: true }).get(function(
 });
 
 export default {
-    enviarDadosAluno(vm) {
+    enviarDadosAluno(evento, vm) {
         console.log("enviar dados aluno")
         window.vmScratch = vm;
-        socket.emit("dados_aluno", JSON.stringify(vm.toJSON()));
+        socket.emit("dados_aluno", {evento, projeto: vm.toJSON()});
     }
 };
