@@ -27,6 +27,25 @@ class PreviewModal extends React.Component {
             previewing: false
         };
     }
+
+    /**
+     * Conditionally returns an intro modal depending on the hideIntro prop
+     * @returns { React.Component | null } null if hideIntro is true, the intro modal component otherwise
+     */
+    introIfShown () {
+        if (this.props.hideIntro) {
+            return null; // If hideIntro is true, the intro modal should not appear
+        }
+
+        // otherwise, show the intro modal
+        return (<PreviewModalComponent
+            isRtl={this.props.isRtl}
+            previewing={this.state.previewing}
+            onCancel={this.handleCancel}
+            onTryIt={this.handleTryIt}
+            onViewProject={this.handleViewProject}
+        />);
+    }
     handleTryIt () {
         this.setState({previewing: true});
         // try to run in fullscreen mode on tablets.
@@ -41,13 +60,9 @@ class PreviewModal extends React.Component {
     }
     render () {
         return (supportedBrowser() ?
-            <PreviewModalComponent
-                previewing={this.state.previewing}
-                onCancel={this.handleCancel}
-                onTryIt={this.handleTryIt}
-                onViewProject={this.handleViewProject}
-            /> :
+            this.introIfShown() :
             <BrowserModalComponent
+                isRtl={this.props.isRtl}
                 onBack={this.handleCancel}
             />
         );
@@ -55,11 +70,15 @@ class PreviewModal extends React.Component {
 }
 
 PreviewModal.propTypes = {
+    hideIntro: PropTypes.bool,
+    isRtl: PropTypes.bool,
     onTryIt: PropTypes.func,
     onViewProject: PropTypes.func
 };
 
-const mapStateToProps = () => ({});
+const mapStateToProps = state => ({
+    isRtl: state.locales.isRtl
+});
 
 const mapDispatchToProps = dispatch => ({
     onTryIt: () => {

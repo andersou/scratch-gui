@@ -22,7 +22,8 @@
     flex-shrink: 0;
     align-items: center;
     height: $stage-menu-height;
-    padding: $space;
+    padding-top: $space;
+    padding-bottom: $space;
 }
 
 .stage-size-row {
@@ -56,6 +57,10 @@
 .stage-button-icon {
     width: 100%;
     height: 100%;
+}
+
+[dir="rtl"] .stage-button-icon {
+    transform: scaleX(-1);
 }
 
 [dir="ltr"] .stage-button-first {

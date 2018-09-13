@@ -62,6 +62,7 @@ const GUIComponent = props => {
         costumeLibraryVisible,
         costumesTabVisible,
         enableCommunity,
+        hideIntro,
         importInfoVisible,
         intl,
         isPlayerOnly,
@@ -115,7 +116,7 @@ const GUIComponent = props => {
                 {...componentProps}
             >
                 {previewInfoVisible ? (
-                    <PreviewModal />
+                    <PreviewModal hideIntro={hideIntro} />
                 ) : null}
                 {loading ? (
                     <Loader />
@@ -124,7 +125,7 @@ const GUIComponent = props => {
                     <ImportModal />
                 ) : null}
                 {isRendererSupported ? null : (
-                    <WebGlModal />
+                    <WebGlModal isRtl={isRtl} />
                 )}
                 {tipsLibraryVisible ? (
                     <TipsLibrary />
@@ -281,6 +282,7 @@ GUIComponent.propTypes = {
     costumeLibraryVisible: PropTypes.bool,
     costumesTabVisible: PropTypes.bool,
     enableCommunity: PropTypes.bool,
+    hideIntro: PropTypes.bool,
     importInfoVisible: PropTypes.bool,
     intl: intlShape.isRequired,
     isPlayerOnly: PropTypes.bool,
