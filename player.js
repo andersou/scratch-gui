@@ -1,9 +1,9 @@
 var GUI =
 (window["webpackJsonpGUI"] = window["webpackJsonpGUI"] || []).push([["player"],{
 
-/***/ "./node_modules/css-loader/index.js?!./node_modules/postcss-loader/lib/index.js?!./src/playground/player.css":
+/***/ "./node_modules/css-loader/index.js?!./node_modules/postcss-loader/src/index.js?!./src/playground/player.css":
 /*!******************************************************************************************************************!*\
-  !*** ./node_modules/css-loader??ref--5-1!./node_modules/postcss-loader/lib??postcss!./src/playground/player.css ***!
+  !*** ./node_modules/css-loader??ref--5-1!./node_modules/postcss-loader/src??postcss!./src/playground/player.css ***!
   \******************************************************************************************************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
@@ -31,7 +31,7 @@ exports.locals = {
 /***/ (function(module, exports, __webpack_require__) {
 
 
-var content = __webpack_require__(/*! !../../node_modules/css-loader??ref--5-1!../../node_modules/postcss-loader/lib??postcss!./player.css */ "./node_modules/css-loader/index.js?!./node_modules/postcss-loader/lib/index.js?!./src/playground/player.css");
+var content = __webpack_require__(/*! !../../node_modules/css-loader??ref--5-1!../../node_modules/postcss-loader/src??postcss!./player.css */ "./node_modules/css-loader/index.js?!./node_modules/postcss-loader/src/index.js?!./src/playground/player.css");
 
 if(typeof content === 'string') content = [[module.i, content, '']];
 
@@ -113,7 +113,8 @@ if (false) {}
 
 var Player = function Player(_ref) {
     var isPlayerOnly = _ref.isPlayerOnly,
-        onSeeInside = _ref.onSeeInside;
+        onSeeInside = _ref.onSeeInside,
+        projectId = _ref.projectId;
     return _react2.default.createElement(
         _box2.default,
         {
@@ -126,14 +127,16 @@ var Player = function Player(_ref) {
         ),
         _react2.default.createElement(_gui2.default, {
             enableCommunity: true,
-            isPlayerOnly: isPlayerOnly
+            isPlayerOnly: isPlayerOnly,
+            projectId: projectId
         })
     );
 };
 
 Player.propTypes = {
     isPlayerOnly: _propTypes2.default.bool,
-    onSeeInside: _propTypes2.default.func
+    onSeeInside: _propTypes2.default.func,
+    projectId: _propTypes2.default.string
 };
 
 var mapStateToProps = function mapStateToProps(state) {
