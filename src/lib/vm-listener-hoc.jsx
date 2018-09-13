@@ -17,19 +17,12 @@ import ElimuAnalyzer from "../lib/elimu/analyzer";
  * @returns {React.Component} connected component with vm events bound to redux
  */
 
-const vmListenerHOC = function(WrappedComponent) {
+const vmListenerHOC = function (WrappedComponent) {
     class VMListener extends React.Component {
         constructor(props) {
             super(props);
             bindAll(this, ["handleKeyDown", "handleKeyUp"]);
-            let eventoWrapper = (nomeDoEvento, func)=>{
-              let novaFuncao = () => {
-                func.apply(this.props.vm,arguments);
-                console.log("Chama elimu analizer pro evento ",nomeDoEvento);
-                ElimuAnalyzer.enviarDadosAluno(nomeDoEvento,this.props.vm);
-              }
-              return [nomeDoEvento, novaFuncao];
-            }
+            ElimuAnalyzer.bindEvents(this.props.vm);
             // We have to start listening to the vm here rather than in
             // componentDidMount because the HOC mounts the wrapped component,
             // so the HOC componentDidMount triggers after the wrapped component
@@ -38,12 +31,14 @@ const vmListenerHOC = function(WrappedComponent) {
             // we need to start listening before mounting the wrapped component.
             this.props.vm.on("targetsUpdate", this.props.onTargetsUpdate);
             this.props.vm.on("MONITORS_UPDATE", this.props.onMonitorsUpdate);
-            this.props.vm.on(...eventoWrapper("BLOCK_DRAG_UPDATE", this.props.onBlockDragUpdate));
-            
+            this.props.vm.on("BLOCK_DRAG_UPDATE", this.props.onBlockDragUpdate);
+
             this.props.vm.on("TURBO_MODE_ON", this.props.onTurboModeOn);
             this.props.vm.on("TURBO_MODE_OFF", this.props.onTurboModeOff);
             this.props.vm.on("PROJECT_RUN_START", this.props.onProjectRunStart);
             this.props.vm.on("PROJECT_RUN_STOP", this.props.onProjectRunStop);
+            
+           
         }
         componentDidMount() {
             if (this.props.attachKeyboardEvents) {

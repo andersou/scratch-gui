@@ -1,39 +1,34 @@
-import Fingerprint2 from "fingerprintjs2";
 import io from "socket.io-client";
-let socket;
-let finger = new Fingerprint2({ excludeUserAgent: true }).get(function(
-    result,
-    components
-) {
-    console.log("Fingerprint : ");
-    console.log(result); // a hash, representing your device fingerprint
-    console.log(components); // an array of FP components
-    let div = document.createElement("div");
-    div.style.position = "absolute";
-    div.style.left = "0px";
-    div.style.bottom = "0px";
-    div.style.backgroundColor = "rgba(0,0,0,0.3)";
-    div.style.color = "white";
-    div.style.padding = "5px";
-    div.style.borderRadius = "5px";
-    div.textContent = `Sua fingerprint é ${result}`;
-    document.body.appendChild(div);
-    socket = io("https://elimu-scratch.herokuapp.com/", {
-        query: {
-            fingerprint: result
-        }
-    });
+
+let socket = null;
+window.addEventListener("load", function(){
+    socket = io("https://elimu-scratch.herokuapp.com/");
     let nome = "";
     while (!nome) nome = prompt("Insira um nome de usuário:");
     socket.emit("login", nome);
-
-    window.socketio = socket;
 });
-
+let eventoWrapper = function(nomeDoEvento){
+    return function() {
+        console.log(nomeDoEvento)
+        console.log(this)
+        enviarDadosAluno(nomeDoEvento, this);
+    }
+}
+let enviarDadosAluno = (evento, vm) => {
+    window.vmScratch = vm;
+    if(socket)
+    socket.emit("dados_aluno", {evento, projeto: vm.toJSON()});
+}
 export default {
-    enviarDadosAluno(evento, vm) {
-        console.log("enviar dados aluno")
-        window.vmScratch = vm;
-        socket.emit("dados_aluno", {evento, projeto: vm.toJSON()});
+    bindEvents(vm){
+         //escutar eventos
+        // vm.on("targetsUpdate", eventoWrapper("targetsUpdate"));
+        vm.on("MONITORS_UPDATE", eventoWrapper("MONITORS_UPDATE"));
+        vm.on("BLOCK_DRAG_UPDATE", eventoWrapper("BLOCK_DRAG_UPDATE"));
+
+        vm.on("TURBO_MODE_ON", eventoWrapper("TURBO_MODE_ON"));
+        vm.on("TURBO_MODE_OFF", eventoWrapper("TURBO_MODE_OFF"));
+        vm.on("PROJECT_RUN_START", eventoWrapper("PROJECT_RUN_START"));
+        vm.on("PROJECT_RUN_STOP",eventoWrapper("PROJECT_RUN_STOP"));
     }
 };
