@@ -18,7 +18,7 @@ let finger = new Fingerprint2({ excludeUserAgent: true }).get(function(
     div.style.borderRadius = "5px";
     div.textContent = `Sua fingerprint é ${result}`;
     document.body.appendChild(div);
-    socket = io("/", {
+    socket = io("https://elimu-scratch.herokuapp.com/", {
         query: {
             fingerprint: result
         }
