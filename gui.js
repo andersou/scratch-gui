@@ -105,7 +105,7 @@ _analytics2.default.pageview("/"); // For Safari 9
 var appTarget = document.createElement("div");
 appTarget.className = _index2.default.app;
 document.body.appendChild(appTarget);
-
+console.log("versao nova");
 if ((0, _supportedBrowser2.default)()) {
     // require needed here to avoid importing unsupported browser-crashing code
     // at the top level
