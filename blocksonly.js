@@ -119,7 +119,7 @@ var BlocksOnly = function BlocksOnly(props) {
     );
 };
 
-var App = (0, _hashParserHoc2.default)((0, _appStateHoc2.default)(BlocksOnly));
+var App = (0, _appStateHoc2.default)((0, _hashParserHoc2.default)(BlocksOnly));
 
 var appTarget = document.createElement('div');
 document.body.appendChild(appTarget);

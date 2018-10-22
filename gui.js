@@ -62,9 +62,6 @@ if(false) {}
 "use strict";
 
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; // Polyfills
-// For Safari 9
-
 __webpack_require__(/*! es6-object-assign/auto */ "./node_modules/es6-object-assign/auto.js");
 
 __webpack_require__(/*! core-js/fn/array/includes */ "./node_modules/core-js/fn/array/includes.js");
@@ -83,6 +80,76 @@ var _analytics = __webpack_require__(/*! ../lib/analytics */ "./src/lib/analytic
 
 var _analytics2 = _interopRequireDefault(_analytics);
 
+var _appStateHoc = __webpack_require__(/*! ../lib/app-state-hoc.jsx */ "./src/lib/app-state-hoc.jsx");
+
+var _appStateHoc2 = _interopRequireDefault(_appStateHoc);
+
+var _browserModal = __webpack_require__(/*! ../components/browser-modal/browser-modal.jsx */ "./src/components/browser-modal/browser-modal.jsx");
+
+var _browserModal2 = _interopRequireDefault(_browserModal);
+
+var _supportedBrowser = __webpack_require__(/*! ../lib/supported-browser */ "./src/lib/supported-browser.js");
+
+var _supportedBrowser2 = _interopRequireDefault(_supportedBrowser);
+
+var _index = __webpack_require__(/*! ./index.css */ "./src/playground/index.css");
+
+var _index2 = _interopRequireDefault(_index);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+// Register "base" page view
+// Polyfills
+_analytics2.default.pageview("/"); // For Safari 9
+
+var appTarget = document.createElement("div");
+appTarget.className = _index2.default.app;
+document.body.appendChild(appTarget);
+
+if ((0, _supportedBrowser2.default)()) {
+    // require needed here to avoid importing unsupported browser-crashing code
+    // at the top level
+    __webpack_require__(/*! ./render-gui.jsx */ "./src/playground/render-gui.jsx").default(appTarget);
+} else {
+    _browserModal2.default.setAppElement(appTarget);
+    var WrappedBrowserModalComponent = (0, _appStateHoc2.default)(_browserModal2.default, true /* localesOnly */);
+    var handleBack = function handleBack() {};
+    // eslint-disable-next-line react/jsx-no-bind
+    _reactDom2.default.render(_react2.default.createElement(WrappedBrowserModalComponent, { onBack: handleBack }), appTarget);
+}
+
+/***/ }),
+
+/***/ "./src/playground/render-gui.jsx":
+/*!***************************************!*\
+  !*** ./src/playground/render-gui.jsx ***!
+  \***************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+var _react = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+
+var _react2 = _interopRequireDefault(_react);
+
+var _reactDom = __webpack_require__(/*! react-dom */ "./node_modules/react-dom/index.js");
+
+var _reactDom2 = _interopRequireDefault(_reactDom);
+
+var _redux = __webpack_require__(/*! redux */ "./node_modules/redux/es/index.js");
+
+var _appStateHoc = __webpack_require__(/*! ../lib/app-state-hoc.jsx */ "./src/lib/app-state-hoc.jsx");
+
+var _appStateHoc2 = _interopRequireDefault(_appStateHoc);
+
 var _gui = __webpack_require__(/*! ../containers/gui.jsx */ "./src/containers/gui.jsx");
 
 var _gui2 = _interopRequireDefault(_gui);
@@ -91,38 +158,37 @@ var _hashParserHoc = __webpack_require__(/*! ../lib/hash-parser-hoc.jsx */ "./sr
 
 var _hashParserHoc2 = _interopRequireDefault(_hashParserHoc);
 
-var _appStateHoc = __webpack_require__(/*! ../lib/app-state-hoc.jsx */ "./src/lib/app-state-hoc.jsx");
+var _titledHoc = __webpack_require__(/*! ../lib/titled-hoc.jsx */ "./src/lib/titled-hoc.jsx");
 
-var _appStateHoc2 = _interopRequireDefault(_appStateHoc);
-
-var _index = __webpack_require__(/*! ./index.css */ "./src/playground/index.css");
-
-var _index2 = _interopRequireDefault(_index);
+var _titledHoc2 = _interopRequireDefault(_titledHoc);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-if (false) {}
+/*
+ * Render the GUI playground. This is a separate function because importing anything
+ * that instantiates the VM causes unsupported browsers to crash
+ * {object} appTarget - the DOM element to render to
+ */
+exports.default = function (appTarget) {
+    _gui2.default.setAppElement(appTarget);
 
-// Register "base" page view
-_analytics2.default.pageview("/");
+    // note that redux's 'compose' function is just being used as a general utility to make
+    // the hierarchy of HOC constructor calls clearer here; it has nothing to do with redux's
+    // ability to compose reducers.
+    var WrappedGui = (0, _redux.compose)(_appStateHoc2.default, _hashParserHoc2.default, _titledHoc2.default)(_gui2.default);
 
-var appTarget = document.createElement("div");
-appTarget.className = _index2.default.app;
-document.body.appendChild(appTarget);
+    // TODO a hack for testing the backpack, allow backpack host to be set by url param
+    var backpackHostMatches = window.location.href.match(/[?&]backpack_host=([^&]*)&?/);
+    var backpackHost = backpackHostMatches ? backpackHostMatches[1] : null;
 
-_gui2.default.setAppElement(appTarget);
-var WrappedGui = (0, _hashParserHoc2.default)((0, _appStateHoc2.default)(_gui2.default));
+    var backpackOptions = {
+        visible: true,
+        host: backpackHost
+    };
+    if (false) {}
 
-// TODO a hack for testing the backpack, allow backpack host to be set by url param
-var backpackHostMatches = window.location.href.match(/[?&]backpack_host=([^&]*)&?/);
-var backpackHost = backpackHostMatches ? backpackHostMatches[1] : null;
-
-var backpackOptions = {
-    visible: true,
-    host: backpackHost
+    _reactDom2.default.render(_react2.default.createElement(WrappedGui, { backpackOptions: backpackOptions }), appTarget);
 };
-
-_reactDom2.default.render(_react2.default.createElement(WrappedGui, { backpackOptions: backpackOptions }), appTarget);
 
 /***/ }),
 

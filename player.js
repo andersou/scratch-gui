@@ -83,6 +83,8 @@ var _reactDom2 = _interopRequireDefault(_reactDom);
 
 var _reactRedux = __webpack_require__(/*! react-redux */ "./node_modules/react-redux/es/index.js");
 
+var _redux = __webpack_require__(/*! redux */ "./node_modules/redux/es/index.js");
+
 var _box = __webpack_require__(/*! ../components/box/box.jsx */ "./src/components/box/box.jsx");
 
 var _box2 = _interopRequireDefault(_box);
@@ -98,6 +100,10 @@ var _hashParserHoc2 = _interopRequireDefault(_hashParserHoc);
 var _appStateHoc = __webpack_require__(/*! ../lib/app-state-hoc.jsx */ "./src/lib/app-state-hoc.jsx");
 
 var _appStateHoc2 = _interopRequireDefault(_appStateHoc);
+
+var _titledHoc = __webpack_require__(/*! ../lib/titled-hoc.jsx */ "./src/lib/titled-hoc.jsx");
+
+var _titledHoc2 = _interopRequireDefault(_titledHoc);
 
 var _mode = __webpack_require__(/*! ../reducers/mode */ "./src/reducers/mode.js");
 
@@ -154,7 +160,11 @@ var mapDispatchToProps = function mapDispatchToProps(dispatch) {
 };
 
 var ConnectedPlayer = (0, _reactRedux.connect)(mapStateToProps, mapDispatchToProps)(Player);
-var WrappedPlayer = (0, _hashParserHoc2.default)((0, _appStateHoc2.default)(ConnectedPlayer));
+
+// note that redux's 'compose' function is just being used as a general utility to make
+// the hierarchy of HOC constructor calls clearer here; it has nothing to do with redux's
+// ability to compose reducers.
+var WrappedPlayer = (0, _redux.compose)(_appStateHoc2.default, _hashParserHoc2.default, _titledHoc2.default)(ConnectedPlayer);
 
 var appTarget = document.createElement('div');
 document.body.appendChild(appTarget);
