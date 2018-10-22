@@ -278,3 +278,21 @@ $fade-out-distance: 15px;
 .extension-button > div {
     margin-top: 0;
 }
+
+/* Menu */
+
+.menu-bar-position {
+    position: relative;
+    z-index: $z-index-menu-bar;
+}
+/* Alerts */
+
+.alerts-container {
+    width: 448px;
+    z-index: $z-index-alerts;
+    left: 0;
+    right: 0;
+    margin: auto;
+    position: absolute;
+    margin-top: 53px;
+}

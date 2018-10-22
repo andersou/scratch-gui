@@ -68,11 +68,11 @@ describe('Working with the blocks', () => {
         await findByText('0', scope.reportedValue);
 
         await clickText('Make a Variable');
-        let el = await findByXpath("//input[@placeholder='']");
+        let el = await findByXpath("//input[@name='New variable name:']");
         await el.sendKeys('score');
         await clickButton('OK');
         await clickText('Make a Variable');
-        el = await findByXpath("//input[@placeholder='']");
+        el = await findByXpath("//input[@name='New variable name:']");
         await el.sendKeys('second variable');
         await clickButton('OK');
 
@@ -98,7 +98,7 @@ describe('Working with the blocks', () => {
         await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for scroll animation
 
         await clickText('Make a List');
-        let el = await findByXpath("//input[@placeholder='']");
+        let el = await findByXpath("//input[@name='New list name:']");
         await el.sendKeys('list1');
         await clickButton('OK');
 
@@ -154,6 +154,19 @@ describe('Working with the blocks', () => {
         // Make sure toolbox has been scrolled to the pen extension
         await findByText('stamp', scope.blocksTab);
 
+        const logs = await getLogs();
+        await expect(logs).toEqual([]);
+    });
+
+    test('Record option from sound block menu opens sound recorder', async () => {
+        await loadUri(uri);
+        await clickXpath('//button[@title="Try It"]');
+        await clickText('Code');
+        await clickText('Sound', scope.blocksTab);
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait for scroll animation
+        await clickText('Meow', scope.blocksTab); // Click "play sound <Meow> until done" block
+        await clickText('record'); // Click "record..." option in the block's sound menu
+        await findByText('Record Sound'); // Sound recorder is open
         const logs = await getLogs();
         await expect(logs).toEqual([]);
     });

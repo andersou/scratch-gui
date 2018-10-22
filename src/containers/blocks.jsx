@@ -8,6 +8,7 @@ import VMScratchBlocks from '../lib/blocks';
 import VM from 'scratch-vm';
 
 import analytics from '../lib/analytics';
+import log from '../lib/log.js';
 import Prompt from './prompt.jsx';
 import ConnectionModal from './connection-modal.jsx';
 import BlocksComponent from '../components/blocks/blocks.jsx';
@@ -20,8 +21,13 @@ import {STAGE_DISPLAY_SIZES} from '../lib/layout-constants';
 import {connect} from 'react-redux';
 import {updateToolbox} from '../reducers/toolbox';
 import {activateColorPicker} from '../reducers/color-picker';
-import {closeExtensionLibrary} from '../reducers/modals';
+import {closeExtensionLibrary, openSoundRecorder} from '../reducers/modals';
 import {activateCustomProcedures, deactivateCustomProcedures} from '../reducers/custom-procedures';
+
+import {
+    activateTab,
+    SOUNDS_TAB_INDEX
+} from '../reducers/editor-tab';
 
 const addFunctionListener = (object, property, callback) => {
     const oldFn = object[property];
@@ -43,6 +49,7 @@ class Blocks extends React.Component {
             'handleConnectionModalStart',
             'handleConnectionModalClose',
             'handleStatusButtonUpdate',
+            'handleOpenSoundRecorder',
             'handlePromptStart',
             'handlePromptCallback',
             'handlePromptClose',
@@ -62,6 +69,8 @@ class Blocks extends React.Component {
         ]);
         this.ScratchBlocks.prompt = this.handlePromptStart;
         this.ScratchBlocks.statusButtonCallback = this.handleConnectionModalStart;
+        this.ScratchBlocks.recordSoundCallback = this.handleOpenSoundRecorder;
+
         this.state = {
             workspaceMetrics: {},
             prompt: null,
@@ -300,7 +309,21 @@ class Blocks extends React.Component {
         // Remove and reattach the workspace listener (but allow flyout events)
         this.workspace.removeChangeListener(this.props.vm.blockListener);
         const dom = this.ScratchBlocks.Xml.textToDom(data.xml);
-        this.ScratchBlocks.Xml.clearWorkspaceAndLoadFromXml(dom, this.workspace);
+        try {
+            this.ScratchBlocks.Xml.clearWorkspaceAndLoadFromXml(dom, this.workspace);
+        } catch (error) {
+            // The workspace is likely incomplete. What did update should be
+            // functional.
+            //
+            // Instead of throwing the error, by logging it and continuing as
+            // normal lets the other workspace update processes complete in the
+            // gui and vm, which lets the vm run even if the workspace is
+            // incomplete. Throwing the error would keep things like setting the
+            // correct editing target from happening which can interfere with
+            // some blocks and processes in the vm.
+            error.message = `Workspace Update Error: ${error.message}`;
+            log.error(error);
+        }
         this.workspace.addChangeListener(this.props.vm.blockListener);
 
         if (this.props.vm.editingTarget && this.state.workspaceMetrics[this.props.vm.editingTarget.id]) {
@@ -336,7 +359,7 @@ class Blocks extends React.Component {
     }
     handleCategorySelected (categoryId) {
         const extension = extensionData.find(ext => ext.extensionId === categoryId);
-        if (extension && extension.launchDeviceConnectionFlow) {
+        if (extension && extension.launchPeripheralConnectionFlow) {
             this.handleConnectionModalStart(categoryId);
         }
 
@@ -365,9 +388,9 @@ class Blocks extends React.Component {
             this.setState({connectionModal: {
                 extensionId: extensionId,
                 useAutoScan: extension.useAutoScan,
-                deviceImage: extension.deviceImage,
-                smallDeviceImage: extension.smallDeviceImage,
-                deviceButtonImage: extension.deviceButtonImage,
+                peripheralImage: extension.peripheralImage,
+                smallPeripheralImage: extension.smallPeripheralImage,
+                peripheralButtonImage: extension.peripheralButtonImage,
                 name: extension.name,
                 connectingMessage: extension.connectingMessage,
                 helpLink: extension.helpLink
@@ -379,6 +402,9 @@ class Blocks extends React.Component {
     }
     handleStatusButtonUpdate () {
         this.ScratchBlocks.refreshStatusButtons(this.workspace);
+    }
+    handleOpenSoundRecorder () {
+        this.props.onOpenSoundRecorder();
     }
     handlePromptCallback (input, optionSelection) {
         this.state.prompt.callback(
@@ -408,6 +434,7 @@ class Blocks extends React.Component {
             isRtl,
             isVisible,
             onActivateColorPicker,
+            onOpenSoundRecorder,
             updateToolboxState,
             onActivateCustomProcedures,
             onRequestCloseExtensionLibrary,
@@ -471,6 +498,7 @@ Blocks.propTypes = {
     messages: PropTypes.objectOf(PropTypes.string),
     onActivateColorPicker: PropTypes.func,
     onActivateCustomProcedures: PropTypes.func,
+    onOpenSoundRecorder: PropTypes.func,
     onRequestCloseCustomProcedures: PropTypes.func,
     onRequestCloseExtensionLibrary: PropTypes.func,
     options: PropTypes.shape({
@@ -550,6 +578,10 @@ const mapStateToProps = state => ({
 const mapDispatchToProps = dispatch => ({
     onActivateColorPicker: callback => dispatch(activateColorPicker(callback)),
     onActivateCustomProcedures: (data, callback) => dispatch(activateCustomProcedures(data, callback)),
+    onOpenSoundRecorder: () => {
+        dispatch(activateTab(SOUNDS_TAB_INDEX));
+        dispatch(openSoundRecorder());
+    },
     onRequestCloseExtensionLibrary: () => {
         dispatch(closeExtensionLibrary());
     },
