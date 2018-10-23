@@ -132,6 +132,7 @@
     }
   },
   "dependencies": {
+    "dexie": "^2.0.4",
     "fingerprintjs2": "^1.8.1",
     "socket.io-client": "^2.1.1"
   }
