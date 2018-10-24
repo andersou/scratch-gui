@@ -2,9 +2,10 @@ import Modal from '../../modal/modal.jsx';
 import React from 'react';
 import db from '../../../lib/elimu/project-database';
 import style from './load-from-browser.css';
+import { connect } from 'react-redux';
 
 
-export default class extends React.Component {
+class LoadFromBrowserModal extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
@@ -20,7 +21,7 @@ export default class extends React.Component {
             this.setState({ projetos });
         })
     }
-    salvarProjeto(projeto){
+    salvarProjeto(projeto) {
         const downloadLink = document.createElement('a');
         document.body.appendChild(downloadLink);
         if (navigator.msSaveOrOpenBlob) {
@@ -34,6 +35,13 @@ export default class extends React.Component {
         downloadLink.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(downloadLink);
+    }
+    carregarProjeto(projeto) {
+        var reader = new FileReader();
+        reader.addEventListener("loadend", ()=> {
+            this.props.vm.loadProject(reader.result)
+        });
+        reader.readAsArrayBuffer(projeto);
     }
     render() {
         return (
@@ -55,19 +63,25 @@ export default class extends React.Component {
                         </tr>
                     </thead>
                     <tbody>
-                        
+
                         {this.state.projetos.map(projeto => {
                             return <tr key={projeto.id}>
                                 <td>{projeto.id}</td>
                                 <td>{projeto.timestamp.toLocaleString()}</td>
                                 <td>{projeto.event}</td>
-                                <td><button className={`${style.pureButton} ${style.pureButtonPrimary}`} onClick={()=>this.salvarProjeto(projeto.project)}>Salvar</button>
+                                <td>
+                                    <button className={`${style.pureButton} ${style.pureButtonPrimary}`} onClick={() => this.salvarProjeto(projeto.project)}>Salvar</button>
+                                    <button className={`${style.pureButton} ${style.pureButtonPrimary}`} onClick={() => this.carregarProjeto(projeto.project)}>Carregar</button>
                                 </td>
                             </tr>
                         })}
-                        </tbody>
+                    </tbody>
                 </table>
             </Modal>
         )
     }
 }
+const mapStateToProps = state => ({
+    vm: state.scratchGui.vm
+})
+export default connect(mapStateToProps, () => ({}))(LoadFromBrowserModal);
