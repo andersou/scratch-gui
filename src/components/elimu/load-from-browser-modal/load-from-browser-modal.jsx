@@ -38,7 +38,7 @@ class LoadFromBrowserModal extends React.Component {
     }
     carregarProjeto(projeto) {
         var reader = new FileReader();
-        reader.addEventListener("loadend", ()=> {
+        reader.addEventListener("loadend", () => {
             this.props.vm.loadProject(reader.result)
         });
         reader.readAsArrayBuffer(projeto);
@@ -70,8 +70,8 @@ class LoadFromBrowserModal extends React.Component {
                                 <td>{projeto.timestamp.toLocaleString()}</td>
                                 <td>{projeto.event}</td>
                                 <td>
-                                    <button className={`${style.pureButton} ${style.pureButtonPrimary}`} onClick={() => this.salvarProjeto(projeto.project)}>Salvar</button>
-                                    <button className={`${style.pureButton} ${style.pureButtonPrimary}`} onClick={() => this.carregarProjeto(projeto.project)}>Carregar</button>
+                                    <button className={`${style.pureButton} ${style.buttonSecondary}`} onClick={() => this.salvarProjeto(projeto.project)}>Salvar</button>
+                                    <button className={`${style.pureButton} ${style.buttonWarning}`} onClick={() => this.carregarProjeto(projeto.project)} style={{ marginLeft: "6px" }} >Carregar</button>
                                 </td>
                             </tr>
                         })}
