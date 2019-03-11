@@ -27,11 +27,18 @@
     line-height: 34px;
     white-space: nowrap;
     padding: 0 10px;
+    font-size: .75rem;
+    margin: 0;
+    font-weight: bold;
 }
 
 .menu-item.active,
 .menu-item:hover {
     background-color: $ui-black-transparent;
+}
+
+.menu-item.hoverable {
+    cursor: pointer;
 }
 
 .menu-section {

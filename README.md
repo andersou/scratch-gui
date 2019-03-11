@@ -13,7 +13,7 @@ npm install https://github.com/LLK/scratch-gui.git
 ```
 If you want to edit/play yourself:
 ```bash
-git clone git@github.com:LLK/scratch-gui.git
+git clone https://github.com/LLK/scratch-gui.git
 cd scratch-gui
 npm install
 ```
@@ -84,6 +84,12 @@ npm run test:unit
 To run unit tests in watch mode (watches for code changes and continuously runs tests):
 ```bash
 npm run test:unit -- --watch
+```
+
+You can run a single file of integration tests (in this example, the `button` tests):
+
+```bash
+$(npm bin)/jest --runInBand test/unit/components/button.test.jsx
 ```
 
 #### Running integration tests

@@ -6,10 +6,12 @@ import {connect} from 'react-redux';
 import VM from 'scratch-vm';
 import AudioEngine from 'scratch-audio';
 
+import {setProjectUnchanged} from '../reducers/project-changed';
 import {
     LoadingStates,
+    getIsLoadingWithId,
     onLoadedProject,
-    getIsLoadingWithId
+    projectError
 } from '../reducers/project-state';
 
 /*
@@ -24,56 +26,74 @@ const vmManagerHOC = function (WrappedComponent) {
             bindAll(this, [
                 'loadProject'
             ]);
-            this.state = {
-                loadingError: false,
-                errorMessage: ''
-            };
         }
         componentDidMount () {
-            if (this.props.vm.initialized) return;
-            this.audioEngine = new AudioEngine();
-            this.props.vm.attachAudioEngine(this.audioEngine);
-            this.props.vm.setCompatibilityMode(true);
-            this.props.vm.start();
-            this.props.vm.initialized = true;
-        }
-        componentDidUpdate (prevProps) {
-            if (this.props.isLoadingWithId && !prevProps.isLoadingWithId) {
-                this.loadProject(this.props.projectData, this.props.loadingState);
+            if (!this.props.vm.initialized) {
+                this.audioEngine = new AudioEngine();
+                this.props.vm.attachAudioEngine(this.audioEngine);
+                this.props.vm.setCompatibilityMode(true);
+                this.props.vm.initialized = true;
+                this.props.vm.setLocale(this.props.locale, this.props.messages);
+            }
+            if (!this.props.isPlayerOnly && !this.props.isStarted) {
+                this.props.vm.start();
             }
         }
-        loadProject (projectData, loadingState) {
-            return this.props.vm.loadProject(projectData)
+        componentDidUpdate (prevProps) {
+            // if project is in loading state, AND fonts are loaded,
+            // and they weren't both that way until now... load project!
+            if (this.props.isLoadingWithId && this.props.fontsLoaded &&
+                (!prevProps.isLoadingWithId || !prevProps.fontsLoaded)) {
+                this.loadProject();
+            }
+            // Start the VM if entering editor mode with an unstarted vm
+            if (!this.props.isPlayerOnly && !this.props.isStarted) {
+                this.props.vm.start();
+            }
+        }
+        loadProject () {
+            return this.props.vm.loadProject(this.props.projectData)
                 .then(() => {
-                    this.props.onLoadedProject(loadingState);
+                    this.props.onLoadedProject(this.props.loadingState, this.props.canSave);
+                    // Wrap in a setTimeout because skin loading in
+                    // the renderer can be async.
+                    setTimeout(() => this.props.onSetProjectUnchanged());
+
+                    // If the vm is not running, call draw on the renderer manually
+                    // This draws the state of the loaded project with no blocks running
+                    // which closely matches the 2.0 behavior, except for monitors–
+                    // 2.0 runs monitors and shows updates (e.g. timer monitor)
+                    // before the VM starts running other hat blocks.
+                    if (!this.props.isStarted) {
+                        // Wrap in a setTimeout because skin loading in
+                        // the renderer can be async.
+                        setTimeout(() => this.props.vm.renderer.draw());
+                    }
                 })
                 .catch(e => {
-                    // Need to catch this error and update component state so that
-                    // error page gets rendered if project failed to load
-                    this.setState({loadingError: true, errorMessage: e});
+                    this.props.onError(e);
                 });
         }
         render () {
             const {
                 /* eslint-disable no-unused-vars */
-                onLoadedProject: onLoadedProjectProp,
-                projectData,
-                projectId,
+                fontsLoaded,
                 loadingState,
+                locale,
+                messages,
+                isStarted,
+                onError: onErrorProp,
+                onLoadedProject: onLoadedProjectProp,
+                onSetProjectUnchanged,
+                projectData,
                 /* eslint-enable no-unused-vars */
                 isLoadingWithId: isLoadingWithIdProp,
                 vm,
                 ...componentProps
             } = this.props;
-            // don't display anything until we have data loaded
-            if (!this.props.projectData) {
-                return null;
-            }
             return (
                 <WrappedComponent
-                    errorMessage={this.state.errorMessage}
                     isLoading={isLoadingWithIdProp}
-                    loadingError={this.state.loadingError}
                     vm={vm}
                     {...componentProps}
                 />
@@ -82,31 +102,54 @@ const vmManagerHOC = function (WrappedComponent) {
     }
 
     VMManager.propTypes = {
+        canSave: PropTypes.bool,
+        cloudHost: PropTypes.string,
+        fontsLoaded: PropTypes.bool,
         isLoadingWithId: PropTypes.bool,
+        isPlayerOnly: PropTypes.bool,
         loadingState: PropTypes.oneOf(LoadingStates),
+        locale: PropTypes.string,
+        messages: PropTypes.objectOf(PropTypes.string),
+        onError: PropTypes.func,
         onLoadedProject: PropTypes.func,
+        onSetProjectUnchanged: PropTypes.func,
         projectData: PropTypes.oneOfType([PropTypes.object, PropTypes.string]),
         projectId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        username: PropTypes.string,
         vm: PropTypes.instanceOf(VM).isRequired
     };
 
     const mapStateToProps = state => {
         const loadingState = state.scratchGui.projectState.loadingState;
         return {
+            fontsLoaded: state.scratchGui.fontsLoaded,
             isLoadingWithId: getIsLoadingWithId(loadingState),
+            locale: state.locales.locale,
+            messages: state.locales.messages,
             projectData: state.scratchGui.projectState.projectData,
             projectId: state.scratchGui.projectState.projectId,
-            loadingState: loadingState
+            loadingState: loadingState,
+            isPlayerOnly: state.scratchGui.mode.isPlayerOnly,
+            isStarted: state.scratchGui.vmStatus.started
         };
     };
 
     const mapDispatchToProps = dispatch => ({
-        onLoadedProject: loadingState => dispatch(onLoadedProject(loadingState))
+        onError: error => dispatch(projectError(error)),
+        onLoadedProject: (loadingState, canSave) =>
+            dispatch(onLoadedProject(loadingState, canSave, true)),
+        onSetProjectUnchanged: () => dispatch(setProjectUnchanged())
     });
+
+    // Allow incoming props to override redux-provided props. Used to mock in tests.
+    const mergeProps = (stateProps, dispatchProps, ownProps) => Object.assign(
+        {}, stateProps, dispatchProps, ownProps
+    );
 
     return connect(
         mapStateToProps,
-        mapDispatchToProps
+        mapDispatchToProps,
+        mergeProps
     )(VMManager);
 };
 

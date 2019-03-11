@@ -7,11 +7,14 @@ import {intlShape, injectIntl} from 'react-intl';
 import {connect} from 'react-redux';
 import {openBackdropLibrary} from '../reducers/modals';
 import {activateTab, COSTUMES_TAB_INDEX} from '../reducers/editor-tab';
+import {showStandardAlert, closeAlertWithId} from '../reducers/alerts';
 import {setHoveredSprite} from '../reducers/hovered-target';
 import DragConstants from '../lib/drag-constants';
 import DropAreaHOC from '../lib/drop-area-hoc.jsx';
+import ThrottledPropertyHOC from '../lib/throttled-property-hoc.jsx';
 import {emptyCostume} from '../lib/empty-assets';
 import sharedMessages from '../lib/shared-messages';
+import {fetchCode} from '../lib/backpack-api';
 
 import StageSelectorComponent from '../components/stage-selector/stage-selector.jsx';
 
@@ -22,10 +25,13 @@ const dragTypes = [
     DragConstants.COSTUME,
     DragConstants.SOUND,
     DragConstants.BACKPACK_COSTUME,
-    DragConstants.BACKPACK_SOUND
+    DragConstants.BACKPACK_SOUND,
+    DragConstants.BACKPACK_CODE
 ];
 
-const DroppableStage = DropAreaHOC(dragTypes)(StageSelectorComponent);
+const DroppableThrottledStage = DropAreaHOC(dragTypes)(
+    ThrottledPropertyHOC('url', 500)(StageSelectorComponent)
+);
 
 class StageSelector extends React.Component {
     constructor (props) {
@@ -58,9 +64,13 @@ class StageSelector extends React.Component {
     handleClick () {
         this.props.onSelect(this.props.id);
     }
-    handleNewBackdrop (backdrop) {
-        this.props.vm.addBackdrop(backdrop.md5, backdrop).then(() =>
-            this.props.onActivateTab(COSTUMES_TAB_INDEX));
+    handleNewBackdrop (backdrops_) {
+        const backdrops = Array.isArray(backdrops_) ? backdrops_ : [backdrops_];
+        return Promise.all(backdrops.map(backdrop =>
+            this.props.vm.addBackdrop(backdrop.md5, backdrop)
+        )).then(() =>
+            this.props.onActivateTab(COSTUMES_TAB_INDEX)
+        );
     }
     handleSurpriseBackdrop () {
         // @todo should this not add a backdrop you already have?
@@ -72,9 +82,19 @@ class StageSelector extends React.Component {
     }
     handleBackdropUpload (e) {
         const storage = this.props.vm.runtime.storage;
-        handleFileUpload(e.target, (buffer, fileType, fileName) => {
-            costumeUpload(buffer, fileType, fileName, storage, this.handleNewBackdrop);
-        });
+        this.props.onShowImporting();
+        handleFileUpload(e.target, (buffer, fileType, fileName, fileIndex, fileCount) => {
+            costumeUpload(buffer, fileType, storage, vmCostumes => {
+                vmCostumes.forEach((costume, i) => {
+                    costume.name = `${fileName}${i ? i + 1 : ''}`;
+                });
+                this.handleNewBackdrop(vmCostumes).then(() => {
+                    if (fileIndex === fileCount - 1) {
+                        this.props.onCloseImporting();
+                    }
+                });
+            }, this.props.onCloseImporting);
+        }, this.props.onCloseImporting);
     }
     handleFileUploadClick () {
         this.fileInput.click();
@@ -99,6 +119,12 @@ class StageSelector extends React.Component {
                 md5: dragInfo.payload.body,
                 name: dragInfo.payload.name
             }, this.props.id);
+        } else if (dragInfo.dragType === DragConstants.BACKPACK_CODE) {
+            fetchCode(dragInfo.payload.bodyUrl)
+                .then(blocks => {
+                    this.props.vm.shareBlocksToTarget(blocks, this.props.id);
+                    this.props.vm.refreshWorkspace();
+                });
         }
     }
     setFileInput (input) {
@@ -106,9 +132,10 @@ class StageSelector extends React.Component {
     }
     render () {
         const componentProps = omit(this.props, [
-            'assetId', 'dispatchSetHoveredSprite', 'id', 'intl', 'onActivateTab', 'onSelect']);
+            'asset', 'dispatchSetHoveredSprite', 'id', 'intl',
+            'onActivateTab', 'onSelect', 'onShowImporting', 'onCloseImporting']);
         return (
-            <DroppableStage
+            <DroppableThrottledStage
                 fileInputRef={this.setFileInput}
                 onBackdropFileUpload={this.handleBackdropUpload}
                 onBackdropFileUploadClick={this.handleFileUploadClick}
@@ -127,11 +154,13 @@ StageSelector.propTypes = {
     ...StageSelectorComponent.propTypes,
     id: PropTypes.string,
     intl: intlShape.isRequired,
-    onSelect: PropTypes.func
+    onCloseImporting: PropTypes.func,
+    onSelect: PropTypes.func,
+    onShowImporting: PropTypes.func
 };
 
-const mapStateToProps = (state, {assetId, id}) => ({
-    url: assetId && state.scratchGui.vm.runtime.storage.get(assetId).encodeDataURI(),
+const mapStateToProps = (state, {asset, id}) => ({
+    url: asset && asset.encodeDataURI(),
     vm: state.scratchGui.vm,
     receivedBlocks: state.scratchGui.hoveredTarget.receivedBlocks &&
             state.scratchGui.hoveredTarget.sprite === id,
@@ -148,7 +177,9 @@ const mapDispatchToProps = dispatch => ({
     },
     dispatchSetHoveredSprite: spriteId => {
         dispatch(setHoveredSprite(spriteId));
-    }
+    },
+    onCloseImporting: () => dispatch(closeAlertWithId('importingAsset')),
+    onShowImporting: () => dispatch(showStandardAlert('importingAsset'))
 });
 
 export default injectIntl(connect(

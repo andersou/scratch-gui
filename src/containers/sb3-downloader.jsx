@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import {connect} from 'react-redux';
 import {projectTitleInitialState} from '../reducers/project-title';
-
+import downloadBlob from '../lib/download-blob';
 /**
  * Project saver component passes a downloadProject function to its child.
  * It expects this child to be a function with the signature
@@ -26,25 +26,11 @@ class SB3Downloader extends React.Component {
         ]);
     }
     downloadProject () {
-        const downloadLink = document.createElement('a');
-        document.body.appendChild(downloadLink);
-
         this.props.saveProjectSb3().then(content => {
             if (this.props.onSaveFinished) {
                 this.props.onSaveFinished();
             }
-            // Use special ms version if available to get it working on Edge.
-            if (navigator.msSaveOrOpenBlob) {
-                navigator.msSaveOrOpenBlob(content, this.props.projectFilename);
-                return;
-            }
-
-            const url = window.URL.createObjectURL(content);
-            downloadLink.href = url;
-            downloadLink.download = this.props.projectFilename;
-            downloadLink.click();
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(downloadLink);
+            downloadBlob(this.props.projectFilename, content);
         });
     }
     render () {
@@ -52,6 +38,7 @@ class SB3Downloader extends React.Component {
             children
         } = this.props;
         return children(
+            this.props.className,
             this.downloadProject
         );
     }
@@ -67,9 +54,13 @@ const getProjectFilename = (curTitle, defaultTitle) => {
 
 SB3Downloader.propTypes = {
     children: PropTypes.func,
+    className: PropTypes.string,
     onSaveFinished: PropTypes.func,
     projectFilename: PropTypes.string,
     saveProjectSb3: PropTypes.func
+};
+SB3Downloader.defaultProps = {
+    className: ''
 };
 
 const mapStateToProps = state => ({

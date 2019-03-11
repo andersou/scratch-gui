@@ -3,6 +3,7 @@ import alertsReducer, {alertsInitialState} from './alerts';
 import assetDragReducer, {assetDragInitialState} from './asset-drag';
 import cardsReducer, {cardsInitialState} from './cards';
 import colorPickerReducer, {colorPickerInitialState} from './color-picker';
+import connectionModalReducer, {connectionModalInitialState} from './connection-modal';
 import customProceduresReducer, {customProceduresInitialState} from './custom-procedures';
 import blockDragReducer, {blockDragInitialState} from './block-drag';
 import editorTabReducer, {editorTabInitialState} from './editor-tab';
@@ -13,11 +14,14 @@ import modalReducer, {modalsInitialState} from './modals';
 import modeReducer, {modeInitialState} from './mode';
 import monitorReducer, {monitorsInitialState} from './monitors';
 import monitorLayoutReducer, {monitorLayoutInitialState} from './monitor-layout';
+import projectChangedReducer, {projectChangedInitialState} from './project-changed';
 import projectStateReducer, {projectStateInitialState} from './project-state';
 import projectTitleReducer, {projectTitleInitialState} from './project-title';
+import fontsLoadedReducer, {fontsLoadedInitialState} from './fonts-loaded';
 import restoreDeletionReducer, {restoreDeletionInitialState} from './restore-deletion';
 import stageSizeReducer, {stageSizeInitialState} from './stage-size';
 import targetReducer, {targetsInitialState} from './targets';
+import timeoutReducer, {timeoutInitialState} from './timeout';
 import toolboxReducer, {toolboxInitialState} from './toolbox';
 import vmReducer, {vmInitialState} from './vm';
 import vmStatusReducer, {vmStatusInitialState} from './vm-status';
@@ -33,6 +37,7 @@ const guiInitialState = {
     blockDrag: blockDragInitialState,
     cards: cardsInitialState,
     colorPicker: colorPickerInitialState,
+    connectionModal: connectionModalInitialState,
     customProcedures: customProceduresInitialState,
     editorTab: editorTabInitialState,
     mode: modeInitialState,
@@ -43,10 +48,13 @@ const guiInitialState = {
     modals: modalsInitialState,
     monitors: monitorsInitialState,
     monitorLayout: monitorLayoutInitialState,
+    projectChanged: projectChangedInitialState,
     projectState: projectStateInitialState,
     projectTitle: projectTitleInitialState,
+    fontsLoaded: fontsLoadedInitialState,
     restoreDeletion: restoreDeletionInitialState,
     targets: targetsInitialState,
+    timeout: timeoutInitialState,
     toolbox: toolboxInitialState,
     vm: vmInitialState,
     vmStatus: vmStatusInitialState
@@ -58,7 +66,10 @@ const initPlayer = function (currentState) {
         currentState,
         {mode: {
             isFullScreen: currentState.mode.isFullScreen,
-            isPlayerOnly: true
+            isPlayerOnly: true,
+            // When initializing in player mode, make sure to reset
+            // hasEverEnteredEditorMode
+            hasEverEnteredEditor: false
         }}
     );
 };
@@ -68,7 +79,21 @@ const initFullScreen = function (currentState) {
         currentState,
         {mode: {
             isFullScreen: true,
-            isPlayerOnly: currentState.mode.isPlayerOnly
+            isPlayerOnly: currentState.mode.isPlayerOnly,
+            hasEverEnteredEditor: currentState.mode.hasEverEnteredEditor
+        }}
+    );
+};
+
+const initEmbedded = function (currentState) {
+    return Object.assign(
+        {},
+        currentState,
+        {mode: {
+            showBranding: true,
+            isFullScreen: true,
+            isPlayerOnly: true,
+            hasEverEnteredEditor: false
         }}
     );
 };
@@ -78,9 +103,6 @@ const initTutorialCard = function (currentState, deckId) {
         {},
         currentState,
         {
-            modals: {
-                previewInfo: false
-            },
             cards: {
                 visible: true,
                 content: decks,
@@ -94,12 +116,25 @@ const initTutorialCard = function (currentState, deckId) {
     );
 };
 
+const initTelemetryModal = function (currentState) {
+    return Object.assign(
+        {},
+        currentState,
+        {
+            modals: {
+                telemetryModal: true // this key must match `MODAL_TELEMETRY` in modals.js
+            }
+        }
+    );
+};
+
 const guiReducer = combineReducers({
     alerts: alertsReducer,
     assetDrag: assetDragReducer,
     blockDrag: blockDragReducer,
     cards: cardsReducer,
     colorPicker: colorPickerReducer,
+    connectionModal: connectionModalReducer,
     customProcedures: customProceduresReducer,
     editorTab: editorTabReducer,
     mode: modeReducer,
@@ -110,10 +145,13 @@ const guiReducer = combineReducers({
     modals: modalReducer,
     monitors: monitorReducer,
     monitorLayout: monitorLayoutReducer,
+    projectChanged: projectChangedReducer,
     projectState: projectStateReducer,
     projectTitle: projectTitleReducer,
+    fontsLoaded: fontsLoadedReducer,
     restoreDeletion: restoreDeletionReducer,
     targets: targetReducer,
+    timeout: timeoutReducer,
     toolbox: toolboxReducer,
     vm: vmReducer,
     vmStatus: vmStatusReducer
@@ -123,7 +161,9 @@ export {
     guiReducer as default,
     guiInitialState,
     guiMiddleware,
+    initEmbedded,
     initFullScreen,
     initPlayer,
+    initTelemetryModal,
     initTutorialCard
 };
